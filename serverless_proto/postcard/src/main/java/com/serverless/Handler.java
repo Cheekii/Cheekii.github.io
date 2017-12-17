@@ -31,6 +31,7 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
   private static final Integer POSTCARD_PRICE = Integer.valueOf(System.getenv().get("POSTCARD_PRICE"));
   private static final String POSTCARD_CURRANCY = System.getenv().get("POSTCARD_CURRANCY");
 
+  private static final Gson GSON = new Gson();
   private static final Logger LOG = Logger.getLogger(Handler.class);
 
   public Handler() {
@@ -41,13 +42,13 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
   @Override
   public ApiGatewayResponse handleRequest(Map<String, Object> input, Context context) {
     LOG.info("received: " + input);
-    Response responseBody = new Response("Go Serverless v1.x! Your function executed successfully!",
-        input);
 
     String stripeToken = String.valueOf(input.get("stripe"));
     String name = String.valueOf(input.get("name"));
     String message = String.valueOf(input.get("message"));
     UUID orderGuid = UUID.randomUUID();
+    Map<String, String> toAddress = (Map<String, String>)input.get("toAddress");
+    Map<String, String> fromAddress = (Map<String, String>)input.get("fromAddress");
 
     Charge charge;
     try {
@@ -66,7 +67,7 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
 
     Postcard postcard;
     try {
-      postcard = createPostCard(name, message, orderGuid);
+      postcard = createPostCard(name, message, toAddress, fromAddress, orderGuid);
 
     } catch (PostcardCreationException e) {
       LOG.error("Failed to create postcard", e);
@@ -93,8 +94,7 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
       LOG.error("Failed to update charge with metadata", e);
     }
 
-    Gson gson = new Gson();
-    String jsonPostcard = gson.toJson(postcard);
+    String jsonPostcard = GSON.toJson(postcard);
     return ApiGatewayResponse.builder()
         .setStatusCode(200)
         .setObjectBody(jsonPostcard)
@@ -157,7 +157,12 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
     }
   }
 
-  private Postcard createPostCard(String name, String message, UUID orderGuid)
+  private Postcard createPostCard(
+      String name,
+      String message,
+      Map<String, String> toAddress,
+      Map<String, String> fromAddress,
+      UUID orderGuid)
       throws PostcardCreationException{
     Map<String, String> mergeVariables = new HashMap<>();
     mergeVariables.put("name", name);
@@ -165,27 +170,32 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
 
     LobResponse<Postcard> response = null;
     try {
+
       response = new Postcard.RequestBuilder()
           .setDescription("Demo Postcard")
           .setTo(
               new Address.RequestBuilder()
-                  .setName("Harry Zhang")
-                  .setLine1("521-35 Inglewood Park")
-                  .setLine2("")
-                  .setCity("Calgary")
-                  .setState("AB")
-                  .setZip("T2G1B5")
-                  .setCountry("CA")
+                  .setName(toAddress.get("name"))
+                  .setLine1(toAddress.get("address_line1"))
+                  .setLine2(toAddress.get("address_line2"))
+                  .setCity(toAddress.get("address_city"))
+                  .setState(toAddress.get("address_state"))
+                  .setZip(toAddress.get("address_zip"))
+                  .setCountry(toAddress.get("address_country"))
+                  .setPhone(toAddress.get("phone"))
+                  .setEmail(toAddress.get("email"))
           )
           .setFrom(
               new Address.RequestBuilder()
-                  .setName("Leore Avidar")
-                  .setLine1("185 Berry St")
-                  .setLine2("# 6100")
-                  .setCity("San Francisco")
-                  .setState("CA")
-                  .setZip("94107")
-                  .setCountry("US")
+                  .setName(fromAddress.get("name"))
+                  .setLine1(fromAddress.get("address_line1"))
+                  .setLine2(fromAddress.get("address_line2"))
+                  .setCity(fromAddress.get("address_city"))
+                  .setState(fromAddress.get("address_state"))
+                  .setZip(fromAddress.get("address_zip"))
+                  .setCountry(fromAddress.get("address_country"))
+                  .setPhone(fromAddress.get("phone"))
+                  .setEmail(fromAddress.get("email"))
           )
           .setFront("<html style='padding: 1in; font-size: 50;'>Dear {{name}}, {{message}}</html>")
           .setBack("<html style='padding: 1in; font-size: 20;'>Back HTML for {{name}}</html>")
