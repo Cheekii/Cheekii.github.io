@@ -14,3 +14,12 @@
 # Serverless directories
 .serverless
 
+# Unencrypted Secrets File
+secrets.*.yml
+
+# Intellij
+.idea
+*.iml
+
+# NPM
+node_modules

@@ -17,12 +17,17 @@ service: postcard
 # Check out our docs for more details
 # frameworkVersion: "=X.X.X"
 
+plugins:
+  - serverless-secrets-plugin
+
 provider:
   name: aws
   runtime: java8
   stage: dev
   region: us-west-1
 
+custom:
+  secrets: ${file(secrets.${opt:stage, self:provider.stage}.yml)}
 # you can add statements to the Lambda function's IAM Role here
 #  iamRoleStatements:
 #    - Effect: "Allow"
@@ -50,6 +55,10 @@ package:
 functions:
   hello:
     handler: com.serverless.Handler
+    environment:
+      STRIPE_SECRET_KEY: ${self:custom.secrets.STRIPE_SECRET_KEY}
+      LOB_SECRET_KEY: ${self:custom.secrets.LOB_SECRET_KEY}
+
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
