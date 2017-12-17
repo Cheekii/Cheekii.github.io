@@ -58,6 +58,9 @@ functions:
     environment:
       STRIPE_SECRET_KEY: ${self:custom.secrets.STRIPE_SECRET_KEY}
       LOB_SECRET_KEY: ${self:custom.secrets.LOB_SECRET_KEY}
+      LOB_API_VERSION: 2017-11-08
+      POSTCARD_PRICE: 1000
+      POSTCARD_CURRANCY: cad
 
 
 #    The following are a few example events you can configure
