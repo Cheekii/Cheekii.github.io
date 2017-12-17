@@ -1,0 +1,1 @@
+A prototype for bootstraping the whole project using the serverless framework.
