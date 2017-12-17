@@ -15,7 +15,8 @@ dependencies {
         'com.fasterxml.jackson.core:jackson-databind:2.8.5',
         'com.fasterxml.jackson.core:jackson-annotations:2.8.5',
         'com.lob:lob-java:7.0.0',
-        'com.stripe:stripe-java:5.22.1'
+        'com.stripe:stripe-java:5.22.1',
+        'com.google.guava:guava:23.5-jre'
     )
 }
 
