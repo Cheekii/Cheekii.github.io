@@ -19,15 +19,19 @@ service: postcard
 
 plugins:
   - serverless-secrets-plugin
+  - serverless-finch
 
 provider:
   name: aws
   runtime: java8
   stage: dev
-  region: us-west-1
+  region: us-west-2
 
 custom:
   secrets: ${file(secrets.${opt:stage, self:provider.stage}.yml)}
+  client:
+      bucketName: cheekii-co-static-website
+      distributionFolder: client/dist # (Optional) The location of your website. This defaults to client/dist
 # you can add statements to the Lambda function's IAM Role here
 #  iamRoleStatements:
 #    - Effect: "Allow"
