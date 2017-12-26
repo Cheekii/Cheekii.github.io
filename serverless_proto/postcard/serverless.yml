@@ -21,17 +21,29 @@ plugins:
   - serverless-secrets-plugin
   - serverless-finch
 
+custom:
+  bucket: postcard-photo-bucket
+  secrets: ${file(secrets.${opt:stage, self:provider.stage}.yml)}
+  client:
+      bucketName: cheekii-co-static-website
+      distributionFolder: client/dist # (Optional) The location of your website. This defaults to client/dist
+
 provider:
   name: aws
   runtime: java8
   stage: dev
   region: us-west-2
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - s3:*
+      Resource: "arn:aws:s3:::${self:custom.bucket}/*"
+#    - Effect: Allow
+#      Action:
+#        - s3:GutObject
+#      Resource: "arn:aws:s3:::${self:custom.bucket}/*"
 
-custom:
-  secrets: ${file(secrets.${opt:stage, self:provider.stage}.yml)}
-  client:
-      bucketName: cheekii-co-static-website
-      distributionFolder: client/dist # (Optional) The location of your website. This defaults to client/dist
+
 # you can add statements to the Lambda function's IAM Role here
 #  iamRoleStatements:
 #    - Effect: "Allow"
@@ -57,15 +69,27 @@ package:
   artifact: build/distributions/hello.zip
 
 functions:
-  hello:
+  processOrder:
     handler: com.serverless.Handler
+    events:
+      - http: GET processOrder
     environment:
       STRIPE_SECRET_KEY: ${self:custom.secrets.STRIPE_SECRET_KEY}
       LOB_SECRET_KEY: ${self:custom.secrets.LOB_SECRET_KEY}
       LOB_API_VERSION: 2017-11-08
       POSTCARD_PRICE: 1000
       POSTCARD_CURRANCY: cad
-
+  test:
+    handler: com.serverless.Handler2
+    events:
+      - http: POST test
+    environment:
+      STRIPE_SECRET_KEY: ${self:custom.secrets.STRIPE_SECRET_KEY}
+      LOB_SECRET_KEY: ${self:custom.secrets.LOB_SECRET_KEY}
+      LOB_API_VERSION: 2017-11-08
+      POSTCARD_PRICE: 1000
+      POSTCARD_CURRANCY: cad
+      BUCKET: ${self:custom.bucket}
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
@@ -101,12 +125,28 @@ functions:
 #      variable2: value2
 
 # you can add CloudFormation resource templates here
-#resources:
-#  Resources:
-#    NewResource:
-#      Type: AWS::S3::Bucket
-#      Properties:
-#        BucketName: my-new-bucket
+resources:
+  Resources:
+    PhotoBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.bucket}
+        AccessControl: PublicRead
+    S3BucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket:
+          Ref: PhotoBucket
+        PolicyDocument:
+          Statement:
+            - Sid: PublicReadGetObject
+              Effect: Allow
+              Principal: "*"
+              Action:
+              - s3:GetObject
+              Resource: arn:aws:s3:::${self:custom.bucket}/*
+
+
 #  Outputs:
 #     NewOutput:
 #       Description: "Description for the output"

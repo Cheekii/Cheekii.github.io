@@ -170,7 +170,6 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
 
     LobResponse<Postcard> response = null;
     try {
-
       response = new Postcard.RequestBuilder()
           .setDescription("Demo Postcard")
           .setTo(
