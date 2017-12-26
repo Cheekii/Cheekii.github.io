@@ -2,6 +2,12 @@ package com.serverless;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.PutObjectResult;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.lob.Lob;
@@ -16,7 +22,13 @@ import com.stripe.Stripe;
 import com.stripe.exception.APIConnectionException;
 import com.stripe.exception.CardException;
 import com.stripe.model.Charge;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,6 +42,7 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
   private static final String LOB_API_VERSION = System.getenv().get("LOB_API_VERSION");
   private static final Integer POSTCARD_PRICE = Integer.valueOf(System.getenv().get("POSTCARD_PRICE"));
   private static final String POSTCARD_CURRANCY = System.getenv().get("POSTCARD_CURRANCY");
+  private static final String BUCKET_NAME = System.getenv().get("BUCKET");
 
   private static final Gson GSON = new Gson();
   private static final Logger LOG = Logger.getLogger(Handler.class);
@@ -43,16 +56,13 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
   public ApiGatewayResponse handleRequest(Map<String, Object> input, Context context) {
     LOG.info("received: " + input);
 
-    String stripeToken = String.valueOf(input.get("stripe"));
-    String name = String.valueOf(input.get("name"));
-    String message = String.valueOf(input.get("message"));
+    PostCardRequest request = GSON.fromJson(String.valueOf(input.get("body")), PostCardRequest.class);
+
     UUID orderGuid = UUID.randomUUID();
-    Map<String, String> toAddress = (Map<String, String>)input.get("toAddress");
-    Map<String, String> fromAddress = (Map<String, String>)input.get("fromAddress");
 
     Charge charge;
     try {
-      charge = chargeCard(stripeToken, orderGuid);
+      charge = chargeCard(request.getStripe(), orderGuid);
     } catch (ChargeProcessingException e) {
       LOG.error("Failed to charge card", e);
       return ApiGatewayResponse.builder()
@@ -65,9 +75,23 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
           .build();
     }
 
+    byte[] decodedImage = Base64.getDecoder().decode(request.getBase64image());
+    InputStream inputStream = new ByteArrayInputStream(decodedImage);
+    AmazonS3 s3 = AmazonS3ClientBuilder.defaultClient();
+    ObjectMetadata metadata = new ObjectMetadata();
+    metadata.setContentLength(decodedImage.length);
+    String key = orderGuid.toString() + ".jpg";
+    PutObjectRequest putObjectRequest = new PutObjectRequest(
+        BUCKET_NAME,
+        key,
+        inputStream, metadata);
+    PutObjectResult result  = s3.putObject(putObjectRequest);
+    LOG.info("PutObjectResult:"+result);
+    URL url = s3.getUrl(BUCKET_NAME, key);
+
     Postcard postcard;
     try {
-      postcard = createPostCard(name, message, toAddress, fromAddress, orderGuid);
+      postcard = createPostCard(request, url, orderGuid);
 
     } catch (PostcardCreationException e) {
       LOG.error("Failed to create postcard", e);
@@ -158,46 +182,67 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
   }
 
   private Postcard createPostCard(
-      String name,
-      String message,
-      Map<String, String> toAddress,
-      Map<String, String> fromAddress,
+      PostCardRequest request,
+      URL image,
       UUID orderGuid)
       throws PostcardCreationException{
     Map<String, String> mergeVariables = new HashMap<>();
-    mergeVariables.put("name", name);
-    mergeVariables.put("message", message);
+    mergeVariables.put("name", request.getName());
+    mergeVariables.put("message", request.getMessage());
+    mergeVariables.put("img", image.toString());
 
+    Address toAddress = request.getToAddress();
+    Address fromAddress = request.getFromAddress();
     LobResponse<Postcard> response = null;
     try {
       response = new Postcard.RequestBuilder()
           .setDescription("Demo Postcard")
           .setTo(
               new Address.RequestBuilder()
-                  .setName(toAddress.get("name"))
-                  .setLine1(toAddress.get("address_line1"))
-                  .setLine2(toAddress.get("address_line2"))
-                  .setCity(toAddress.get("address_city"))
-                  .setState(toAddress.get("address_state"))
-                  .setZip(toAddress.get("address_zip"))
-                  .setCountry(toAddress.get("address_country"))
-                  .setPhone(toAddress.get("phone"))
-                  .setEmail(toAddress.get("email"))
+//                  .setName("Braden Mund")
+//                  .setLine1("Test adder 1")
+//                  .setLine2("")
+//                  .setCity("Calgary")
+//                  .setState("AB")
+//                  .setZip("T2G1B5")
+//                  .setCountry("CA")
+//                  .setPhone("")
+//                  .setEmail("")
+
+                  .setName(Strings.nullToEmpty(toAddress.getName()))
+                  .setLine1(Strings.nullToEmpty(toAddress.getLine1()))
+                  .setLine2(Strings.nullToEmpty(toAddress.getLine2()))
+                  .setCity(Strings.nullToEmpty(toAddress.getCity()))
+                  .setState(Strings.nullToEmpty(toAddress.getState()))
+                  .setZip(Strings.nullToEmpty(toAddress.getZip()))
+                  .setCountry(Strings.nullToEmpty(toAddress.getCountry()))
+                  .setPhone(Strings.nullToEmpty(toAddress.getPhone()))
+                  .setEmail(Strings.nullToEmpty(toAddress.getEmail()))
           )
           .setFrom(
               new Address.RequestBuilder()
-                  .setName(fromAddress.get("name"))
-                  .setLine1(fromAddress.get("address_line1"))
-                  .setLine2(fromAddress.get("address_line2"))
-                  .setCity(fromAddress.get("address_city"))
-                  .setState(fromAddress.get("address_state"))
-                  .setZip(fromAddress.get("address_zip"))
-                  .setCountry(fromAddress.get("address_country"))
-                  .setPhone(fromAddress.get("phone"))
-                  .setEmail(fromAddress.get("email"))
+//                  .setName("Moe R")
+//                  .setLine1("Test Address 2")
+//                  .setLine2("")
+//                  .setCity("Calgary")
+//                  .setState("AB")
+//                  .setZip("T3G5G3")
+//                  .setCountry("CA")
+//                  .setPhone("")
+//                  .setEmail("")
+                  .setName(Strings.nullToEmpty(fromAddress.getName()))
+                  .setLine1(Strings.nullToEmpty(fromAddress.getLine1()))
+                  .setLine2(Strings.nullToEmpty(fromAddress.getLine2()))
+                  .setCity(Strings.nullToEmpty(fromAddress.getCity()))
+                  .setState(Strings.nullToEmpty(fromAddress.getState()))
+                  .setZip(Strings.nullToEmpty(fromAddress.getZip()))
+                  .setCountry(Strings.nullToEmpty(fromAddress.getCountry()))
+                  .setPhone(Strings.nullToEmpty(fromAddress.getPhone()))
+                  .setEmail(Strings.nullToEmpty(fromAddress.getEmail()))
           )
-          .setFront("<html style='padding: 1in; font-size: 50;'>Dear {{name}}, {{message}}</html>")
-          .setBack("<html style='padding: 1in; font-size: 20;'>Back HTML for {{name}}</html>")
+//          .setFront("<html style='padding: 1in; font-size: 50;'>Dear {{name}}, {{message}}</html>")
+          .setFront("tmpl_0438db589b41b78")
+          .setBack("tmpl_fd873bb10c64aff")
           .setMergeVariables(mergeVariables)
           .setMetadata(Collections.singletonMap("order_guid", orderGuid.toString()))
           .create();

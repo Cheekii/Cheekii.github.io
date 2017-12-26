@@ -12,6 +12,7 @@ import com.lob.Lob;
 import com.stripe.Stripe;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
@@ -55,14 +56,16 @@ public class Handler2 implements RequestHandler<Map<String, Object>, ApiGatewayR
     InputStream inputStream = new ByteArrayInputStream(Base64.getDecoder().decode(request.getBase64image()));
 
     AmazonS3 s3 = AmazonS3ClientBuilder.defaultClient();
+    String key = orderGuid.toString() + ".jpg";
     PutObjectRequest putObjectRequest = new PutObjectRequest(
         BUCKET_NAME,
-        orderGuid.toString() + ".jpg",
+        key,
         inputStream, null);
     PutObjectResult result  = s3.putObject(putObjectRequest);
+    URL url = s3.getUrl(BUCKET_NAME, key);
     return ApiGatewayResponse.builder()
         .setStatusCode(200)
-        .setObjectBody(new Gson().toJson(result))
+        .setObjectBody(new Gson().toJson(url))
         .setHeaders(ImmutableMap.<String,String>builder()
             .put("X-Powered-By","AWS Lambda & serverless")
             .put("Content-Type", "application/json")

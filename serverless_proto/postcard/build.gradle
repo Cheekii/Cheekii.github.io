@@ -37,6 +37,8 @@ dependencies {
         'com.stripe:stripe-java:5.22.1',
         'com.google.guava:guava:23.5-jre'
     )
+
+//    testCompile 'junit:junit:4.12'
 }
 
 // Task for building the zip file for upload

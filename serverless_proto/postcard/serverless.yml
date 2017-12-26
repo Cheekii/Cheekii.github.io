@@ -71,14 +71,16 @@ package:
 functions:
   processOrder:
     handler: com.serverless.Handler
+    timeout: 15
     events:
-      - http: GET processOrder
+      - http: POST processOrder
     environment:
       STRIPE_SECRET_KEY: ${self:custom.secrets.STRIPE_SECRET_KEY}
       LOB_SECRET_KEY: ${self:custom.secrets.LOB_SECRET_KEY}
       LOB_API_VERSION: 2017-11-08
       POSTCARD_PRICE: 1000
       POSTCARD_CURRANCY: cad
+      BUCKET: ${self:custom.bucket}
   test:
     handler: com.serverless.Handler2
     events:
