@@ -76,6 +76,7 @@ class Address extends Component {
                     id="country"
                     whitelist={["CA"]}
                     className="form-control"
+                    valueType="short"
                     required/>
                 </div>
                 <div className="form-group col-md-4">
@@ -85,6 +86,7 @@ class Address extends Component {
                     id="region"
                     country={formApi.values.country}
                     value={formApi.values.state}
+                    countryValueType="short"
                     className="form-control"
                     required/>
                 </div>

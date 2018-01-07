@@ -15,7 +15,7 @@ class App extends Component {
   handleSubmit(event) {
     // const target = event.target;
     const stripe = "tok_visa";
-    fetch('https://5hqq9m5do5.execute-api.us-west-2.amazonaws.com/dev/processOrder', {
+    fetch('https://bebf5eo00e.execute-api.us-west-2.amazonaws.com/dev/processOrder', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
