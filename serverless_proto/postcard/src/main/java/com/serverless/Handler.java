@@ -75,7 +75,7 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
           .build();
     }
 
-    byte[] decodedImage = Base64.getDecoder().decode(request.getBase64image());
+    byte[] decodedImage = Base64.getDecoder().decode(request.getBase64image().split(",")[1]);
     InputStream inputStream = new ByteArrayInputStream(decodedImage);
     AmazonS3 s3 = AmazonS3ClientBuilder.defaultClient();
     ObjectMetadata metadata = new ObjectMetadata();

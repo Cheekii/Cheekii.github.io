@@ -73,7 +73,10 @@ functions:
     handler: com.serverless.Handler
     timeout: 15
     events:
-      - http: POST processOrder
+      - http:
+          path: processOrder
+          method: POST
+          cors: true
     environment:
       STRIPE_SECRET_KEY: ${self:custom.secrets.STRIPE_SECRET_KEY}
       LOB_SECRET_KEY: ${self:custom.secrets.LOB_SECRET_KEY}
