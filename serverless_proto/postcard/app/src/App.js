@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 import Address from './Address';
+import {Form} from 'react-form';
+
 // import { Form, Text } from 'react-form';
 import './App.css';
 
@@ -10,38 +12,29 @@ class App extends Component {
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
-  handleSubmit(submittedValues) {
-    this.setState( { submittedValues });
+  handleSubmit(event) {
+    const target = event.target;
+    console.log(target);
+    // this.setState( { submittedValues });
   }
 
   render() {
     return (
       <div className="App">
         <div className="container">
-          {/* <Form onSubmit={this.handleSubmit} className="form-horizontal">
+          <Form onSubmit={this.handleSubmit}>
             { formApi => (
-              <form onSubmit={formApi.submitForm}>
-                <div className="form-group">
-                  <label htmlFor="firstName" >Full Name</label>
-                  <Text field="firstName" id="firstName" className="form-control" placeholder="full name"/>
-                </div>
-                <div className="control-group">
-                    <label className="control-label">Full Name</label>
-                    <div className="controls">
-                        <input id="full-name" name="full-name" type="text" placeholder="full name" className="input-xlarge" />
-                        <p className="help-block"></p>
-                    </div>
-                </div>
-                <button type="submit">Submit</button>
-              </form>
-            )}
-          </Form> */}
-
-          <form onSubmit={this.handleSubmit} className="was-validated">
-                {/* full-name input */}
+              <form onSubmit={formApi.submitForm} className="was-validated">
                 <Address />
                 <button type="submit" className="btn btn-primary">Submit</button>
               </form>
+            )}
+          </Form>
+
+          {/* <form onSubmit={this.handleSubmit} className="was-validated">
+                <Address />
+                <button type="submit" className="btn btn-primary">Submit</button>
+          </form> */}
         </div>
       </div>
     );

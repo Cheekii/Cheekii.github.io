@@ -1,9 +1,29 @@
 import React, { Component } from 'react';
+import { FormField } from 'react-form';
 import './Address.css';
 
-class Address extends Component {
+class AddressWrapper extends Component {
   constructor( props ) {
     super( props );
+
+    const {
+      fieldApi,
+      onInput
+    } = this.props;
+
+    const {
+      getValue,
+      getError,
+      getWarning,
+      getSuccess,
+      setValue,
+      setTouched,
+    } = fieldApi;
+
+    const error = getError();
+    const warning = getWarning();
+    const success = getSuccess();
+
     this.state = {
       fullname: "",
       address_1: "",
@@ -84,7 +104,7 @@ class Address extends Component {
         </div>
 
         <div className="form-row">
-          <div className="form-group col-md-6">
+          <div className="form-group col-md-5">
             <label htmlFor="country">Country</label>
             <select
               type="text"
@@ -107,7 +127,7 @@ class Address extends Component {
               className="form-control"
               required />
           </div>
-          <div className="form-group col-md-2">
+          <div className="form-group col-md-3">
             <label htmlFor="zip">Zip / Postal Code</label>
             <input
               type="text"
@@ -123,5 +143,7 @@ class Address extends Component {
     );
   }
 }
+
+const Address = FormField(AddressWrapper);
 
 export default Address;
