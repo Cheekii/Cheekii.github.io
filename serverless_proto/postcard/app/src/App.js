@@ -24,6 +24,7 @@ class App extends Component {
       body: JSON.stringify({
         stripe: "tok_visa",
         name: event.toAddress.name,
+        message: event.message,
         toAddress: event.toAddress,
         fromAddress: event.fromAddress,
         base64image: event.image
