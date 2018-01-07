@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import Address from './Address';
+import ImageFile from './ImageFile';
 import {Form, TextArea} from 'react-form';
 import logo from './logo.svg';
 import './App.css';
@@ -13,6 +14,22 @@ class App extends Component {
 
   handleSubmit(event) {
     // const target = event.target;
+    const stripe = "tok_visa";
+    fetch('https://5hqq9m5do5.execute-api.us-west-2.amazonaws.com/dev/processOrder', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        stripe: "tok_visa",
+        name: event.toAddress.name,
+        toAddress: event.toAddress,
+        fromAddress: event.fromAddress,
+        base64image: event.image
+      })
+    })
+    console.log(stripe);
     // this.setState( { submittedValues });
   }
 
@@ -76,6 +93,26 @@ class App extends Component {
                           name="message"
                           className="form-control"
                           rows="10"
+                          required/>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="card">
+                    <div className="card-header" role="tab" id="headingFour">
+                      <h5 className="mb-0">
+                        <a data-toggle="collapse" href="#collapseFour" role="button" aria-expanded="true" aria-controls="collapseFour">
+                          Image
+                        </a>
+                      </h5>
+                    </div>
+
+                    <div id="collapseFour" className="collapse show" role="tabpanel" aria-labelledby="headingFour" data-parent="#accordion">
+                      <div className="card-body">
+                        <ImageFile
+                          field="image"
+                          name="image"
+                          className="form-control"
                           required/>
                       </div>
                     </div>

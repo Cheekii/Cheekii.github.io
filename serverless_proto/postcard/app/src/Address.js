@@ -26,7 +26,7 @@ class Address extends Component {
               <div className="form-group">
                 <label htmlFor="full-name">Full Name:</label>
                 <Text
-                  field="fullname"
+                  field="name"
                   id="full-name"
                   placeholder="full name"
                   className="form-control"
@@ -36,7 +36,7 @@ class Address extends Component {
               <div className="form-group">
                 <label htmlFor="address-line-1">Address Line 1:</label>
                 <Text
-                  field="address_1"
+                  field="line1"
                   id="address-line-1"
                   placeholder="address line 1"
                   className="form-control"
@@ -49,7 +49,7 @@ class Address extends Component {
               <div className="form-group">
                 <label htmlFor="address-line-2" >Address Line 2:</label>
                 <Text
-                  field="address_2"
+                  field="line2"
                   id="address-line-2"
                   placeholder="address line 2"
                   className="form-control" />
@@ -81,10 +81,10 @@ class Address extends Component {
                 <div className="form-group col-md-4">
                   <label htmlFor="region">State / Province / Region</label>
                   <RegionDropdown
-                    field="region"
+                    field="state"
                     id="region"
                     country={formApi.values.country}
-                    value={formApi.values.region}
+                    value={formApi.values.state}
                     className="form-control"
                     required/>
                 </div>
