@@ -17,7 +17,7 @@ class App extends Component {
   render() {
     return (
       <div className="App">
-        <div className="container"> 
+        <div className="container">
           {/* <Form onSubmit={this.handleSubmit} className="form-horizontal">
             { formApi => (
               <form onSubmit={formApi.submitForm}>
@@ -37,9 +37,9 @@ class App extends Component {
             )}
           </Form> */}
 
-          <form onSubmit={this.handleSubmit}>
+          <form onSubmit={this.handleSubmit} className="was-validated">
                 {/* full-name input */}
-                <Address countries={["CA"]}/>
+                <Address />
                 <button type="submit" className="btn btn-primary">Submit</button>
               </form>
         </div>

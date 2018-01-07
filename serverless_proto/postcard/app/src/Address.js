@@ -1,45 +1,70 @@
 import React, { Component } from 'react';
-import { CountryDropdown, RegionDropdown } from 'react-country-region-selector';
 import './Address.css';
 
 class Address extends Component {
-  constructor(props) {
-    super(props);
-    this.countries = props.countries;
-    this.state = { country: '', region: '' };
-    this.selectCountry = this.selectCountry.bind(this);
-    this.selectRegion = this.selectRegion.bind(this);
+  constructor( props ) {
+    super( props );
+    this.state = {
+      fullname: "",
+      address_1: "",
+      address_2: "",
+      city: "",
+      country: "",
+      region: "",
+      zip: ""
+    };
+    this.handleChange = this.handleChange.bind(this);
   }
 
-  selectCountry(val) {
-    this.setState({ country: val });
-  }
-
-  selectRegion(val) {
-    this.setState({ region: val });
+  handleChange(event) {
+    const target = event.target;
+    const value = target.type === 'checkbox' ? target.checked : target.value;
+    const name = target.name;
+    this.setState( {[name]: value});
+    console.log(this.state);
   }
   render() {
-    const { country, region } = this.state;
     return (
       <div className="Address">
         <div className="form-group">
           <label htmlFor="full-name">Full Name:</label>
-          <input id="full-name" name="full-name" type="text" placeholder="full name" className="form-control" required />
+          <input
+            type="text"
+            name="fullname"
+            value={this.state.fullname}
+            onChange={this.handleChange}
+            id="full-name"
+            placeholder="full name"
+            className="form-control"
+            required />
         </div>
 
         <div className="form-group">
           <label htmlFor="address-line-1">Address Line 1:</label>
-          {/* <div className="col-sm-9"> */}
-          <input id="address-line-1" name="address-line-1" type="text" placeholder="address line 1" className="form-control" required />
+          <input
+            type="text"
+            name="address_1"
+            value={this.state.address_1}
+            onChange={this.handleChange}
+            id="address-line-1"
+            placeholder="address line 1"
+            className="form-control"
+            required />
           <small className="form-text text-muted">
             Street address, P.O. box, company name, c/o
-                    </small>
-          {/* </div> */}
+          </small>
         </div>
 
         <div className="form-group">
           <label htmlFor="address-line-2" >Address Line 2:</label>
-          <input id="address-line-2" name="address-line-2" type="text" placeholder="address line 2" className="form-control" />
+          <input
+            type="text"
+            name="address_2"
+            value={this.state.address_2}
+            onChange={this.handleChange}
+            id="address-line-2"
+            placeholder="address line 2"
+            className="form-control" />
           <small className="form-text text-muted">
             Apartment, suite , unit, building, floor, etc.
           </small>
@@ -47,42 +72,51 @@ class Address extends Component {
 
         <div className="form-group">
           <label htmlFor="city">City</label>
-          <input id="city" name="city" type="text" placeholder="city" className="form-control" required />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="country2">Country2</label>
-          <select id="country2" name="country2" type="text" className="form-control gds-cr gds-countryflag" country-data-region-id="gds-cr-1" required />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="region">Region</label>
-          <select id="region" name="region" type="text" className="form-control" id="gds-cr-1" required />
+          <input
+            type="text"
+            name="city"
+            value={this.state.city}
+            onChange={this.handleChange}
+            id="city"
+            placeholder="city"
+            className="form-control"
+            required />
         </div>
 
         <div className="form-row">
           <div className="form-group col-md-6">
             <label htmlFor="country">Country</label>
-            {/* <input type="text" className="form-control" id="inputCity" /> */}
-            <CountryDropdown
+            <select
+              type="text"
+              name="country"
+              value={this.state.country}
+              onChange={this.handleChange}
               id="country"
-              classes="form-control"
-              value={country}
-              onChange={this.selectCountry}
-              whitelist={this.countries}/>
+              className="form-control gds-cr"
+              country-data-region-id="region"
+              required />
           </div>
           <div className="form-group col-md-4">
-            <label htmlFor="state">State / Province / Region</label>
-            <RegionDropdown
-              id="state"
-              classes="form-control"
-              country={country}
-              value={region}
-              onChange={(val) => this.selectRegion(val)} />
+            <label htmlFor="region">State / Province / Region</label>
+            <select
+              type="text"
+              name="state"
+              value={this.state.state}
+              onChange={this.handleChange}
+              id="region"
+              className="form-control"
+              required />
           </div>
           <div className="form-group col-md-2">
-            <label htmlFor="inputZip">Zip</label>
-            <input type="text" className="form-control" id="inputZip" required/>
+            <label htmlFor="zip">Zip / Postal Code</label>
+            <input
+              type="text"
+              name="zip"
+              value={this.state.zip}
+              onChange={this.handleChange}
+              id="zip"
+              className="form-control"
+              required />
           </div>
         </div>
       </div>
