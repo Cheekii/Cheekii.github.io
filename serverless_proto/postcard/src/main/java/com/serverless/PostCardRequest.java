@@ -10,14 +10,16 @@ public class PostCardRequest {
   private String base64image;
   private Address toAddress;
   private Address fromAddress;
+  private String code;
 
-  public PostCardRequest(String name, String message, String stripeToken, Address toAddress, Address fromAddress, String base64image) {
+  public PostCardRequest(String name, String message, String stripeToken, Address toAddress, Address fromAddress, String base64image, String code) {
     this.name = name;
     this.message = message;
     this.stripe = stripeToken;
     this.toAddress = toAddress;
     this.fromAddress = fromAddress;
     this.base64image = base64image;
+    this.code = code;
   }
 
   public String getName() {
@@ -42,5 +44,9 @@ public class PostCardRequest {
 
   public String getBase64image() {
     return base64image;
+  }
+
+  public String getCode() {
+    return code;
   }
 }

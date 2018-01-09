@@ -42,7 +42,9 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
   private static final String LOB_API_VERSION = System.getenv().get("LOB_API_VERSION");
   private static final Integer POSTCARD_PRICE = Integer.valueOf(System.getenv().get("POSTCARD_PRICE"));
   private static final String POSTCARD_CURRANCY = System.getenv().get("POSTCARD_CURRANCY");
+  private static final String DISCOUNT_CODE = System.getenv().get("DISCOUNT_CODE");
   private static final String BUCKET_NAME = System.getenv().get("BUCKET");
+
 
   private static final Gson GSON = new Gson();
   private static final Logger LOG = Logger.getLogger(Handler.class);
@@ -60,21 +62,24 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
 
     UUID orderGuid = UUID.randomUUID();
 
-    Charge charge;
-    try {
-      charge = chargeCard(request.getStripe(), orderGuid);
-    } catch (ChargeProcessingException e) {
-      LOG.error("Failed to charge card", e);
-      return ApiGatewayResponse.builder()
-          .setStatusCode(500)
-          .setObjectBody("failed to charge postcard")
-          .setHeaders(ImmutableMap.<String,String>builder()
-              .put("X-Powered-By","AWS Lambda & serverless")
-              .put("Content-Type", "text/plain")
-              .build())
-          .build();
-    }
+    final boolean discountApplied = request.getCode().equals(DISCOUNT_CODE);
 
+    Charge charge = null;
+    if (!discountApplied) {
+      try {
+        charge = chargeCard(request.getStripe(), orderGuid);
+      } catch (ChargeProcessingException e) {
+        LOG.error("Failed to charge card", e);
+        return ApiGatewayResponse.builder()
+            .setStatusCode(500)
+            .setObjectBody("failed to charge postcard")
+            .setHeaders(ImmutableMap.<String, String>builder()
+                .put("X-Powered-By", "AWS Lambda & serverless")
+                .put("Content-Type", "text/plain")
+                .build())
+            .build();
+      }
+    }
     byte[] decodedImage = Base64.getDecoder().decode(request.getBase64image().split(",")[1]);
     InputStream inputStream = new ByteArrayInputStream(decodedImage);
     AmazonS3 s3 = AmazonS3ClientBuilder.defaultClient();
@@ -96,11 +101,14 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
     } catch (PostcardCreationException e) {
       LOG.error("Failed to create postcard", e);
       String failureMessage = String.format("Postcard could not be created for order: %s", orderGuid);
-      try {
-        refundCharge(charge);
-      } catch (RefundChargeException e1) {
-        LOG.error(String.format("Failed to refund charge for order: %s", orderGuid), e1);
-        failureMessage = String.format("Postcard could not be created for order: %s Failed to refund.", orderGuid);
+      if (!discountApplied) {
+        try {
+          refundCharge(charge);
+        } catch (RefundChargeException e1) {
+          LOG.error(String.format("Failed to refund charge for order: %s", orderGuid), e1);
+          failureMessage = String
+              .format("Postcard could not be created for order: %s Failed to refund.", orderGuid);
+        }
       }
       return ApiGatewayResponse.builder()
           .setStatusCode(500)
@@ -112,10 +120,12 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
           .build();
     }
 
-    try {
-      updateChargeWithOrderId(charge, postcard);
-    } catch (UpdateChargeException e) {
-      LOG.error("Failed to update charge with metadata", e);
+    if (!discountApplied) {
+      try {
+        updateChargeWithOrderId(charge, postcard);
+      } catch (UpdateChargeException e) {
+        LOG.error("Failed to update charge with metadata", e);
+      }
     }
 
     String jsonPostcard = GSON.toJson(postcard);

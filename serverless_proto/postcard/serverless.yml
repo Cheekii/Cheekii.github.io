@@ -83,6 +83,7 @@ functions:
       LOB_API_VERSION: 2017-11-08
       POSTCARD_PRICE: 1000
       POSTCARD_CURRANCY: cad
+      DISCOUNT_CODE: ${self:custom.secrets.DISCOUNT_CODE}
       BUCKET: ${self:custom.bucket}
   test:
     handler: com.serverless.Handler2

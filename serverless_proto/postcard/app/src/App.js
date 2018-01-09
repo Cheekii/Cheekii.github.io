@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import Address from './Address';
 import ImageFile from './ImageFile';
-import {Form, TextArea} from 'react-form';
+import {Form, TextArea, Text} from 'react-form';
 import StripeCheckout from 'react-stripe-checkout';
 import logo from './logo.svg';
 import './App.css';
@@ -61,6 +61,7 @@ class App extends Component {
         stripe: this.state.token.id,
         name: event.toAddress.name,
         message: event.message,
+        code: event.code,
         toAddress: event.toAddress,
         fromAddress: event.fromAddress,
         base64image: event.image
@@ -169,6 +170,11 @@ class App extends Component {
 
                 <div>
                   <StripeOrSubmit token={this.state.token} onToken={this.onToken}/>
+                  <Text
+                    field="code"
+                    name="discountCode"
+                    className="w-25"
+                    placeholder="discount code"/>
                 </div>
               </form>
             )}
