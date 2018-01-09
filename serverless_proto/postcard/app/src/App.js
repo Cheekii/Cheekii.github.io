@@ -26,6 +26,18 @@ function StripeOrSubmit(props) {
   }
 }
 
+function status(response) {
+  if (response.status >= 200 && response.status < 300) {
+    return Promise.resolve(response)
+  } else {
+    return Promise.reject(new Error(response.statusText))
+  }
+}
+
+function json(response) {
+  return response.json()
+}
+
 class App extends Component {
   constructor( props ) {
     super( props );
@@ -34,10 +46,8 @@ class App extends Component {
     this.onToken = this.onToken.bind(this);
   }
 
-
   onToken(token){
     this.setState({token: token});
-    console.log(token);
   }
 
   handleSubmit(event) {
@@ -56,6 +66,18 @@ class App extends Component {
         base64image: event.image
       })
     })
+    .then(status)
+    .then(json)
+    .then(
+      function(data) {
+        alert("Sucessfully submitted postcard.");
+        window.location.reload();
+      }
+    ).catch(function(error) {
+      alert("Failed to submit postcard.")
+      console.log('Request failed', error);
+      window.location.reload();
+    });
   }
 
   render() {

@@ -122,9 +122,10 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
     return ApiGatewayResponse.builder()
         .setStatusCode(200)
         .setObjectBody(jsonPostcard)
-        .setHeaders(ImmutableMap.<String,String>builder()
+        .setHeaders(ImmutableMap.<String, String>builder()
             .put("X-Powered-By","AWS Lambda & serverless")
             .put("Content-Type", "application/json")
+            .put("Access-Control-Allow-Origin", "*")
             .build())
         .build();
   }

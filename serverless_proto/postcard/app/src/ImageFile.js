@@ -15,19 +15,17 @@ class ImageFileWrapper extends React.Component {
   }
 
   render() {
-    //console.log('RENDER');
 
     const { fieldApi, onChange, onBlur, ...rest } = this.props;
 
-    const { getValue, setValue, setTouched } = fieldApi;
-    console.log("yolo");
+    const { setValue } = fieldApi;
     return (
       <FileBase64
         multiple={false}
         onDone={(files) => {
           setValue(files.base64);
         }}
-        accept="application/image" />
+        accept="application/image" {...rest} />
     );
   }
 }

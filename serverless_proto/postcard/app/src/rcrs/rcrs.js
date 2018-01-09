@@ -201,7 +201,6 @@ class RegionDropdownWrapper extends React.Component {
         {...rest}
         value={getValue() || ''}
         onChange={(e) => {
-          console.log(e.target.value);
           setValue(e.target.value);
           if (onChange) {
             onChange(e.target.value, e);
