@@ -6,7 +6,7 @@ import StripeCheckout from 'react-stripe-checkout';
 import logo from './logo.svg';
 import './App.css';
 
-function StripeOrSubmiton(props) {
+function StripeOrSubmit(props) {
   const token = props.token;
   const onToken = props.onToken;
   if (token) {
@@ -19,7 +19,7 @@ function StripeOrSubmiton(props) {
       amount={1000}
       currency="CAD"
       >
-      <button className="btn btn-primary">
+      <button className="btn btn-primary" type="button">
         Pay
       </button>
     </StripeCheckout>
@@ -37,11 +37,10 @@ class App extends Component {
 
   onToken(token){
     this.setState({token: token});
+    console.log(token);
   }
 
   handleSubmit(event) {
-    // const target = event.target;
-    const stripe = "tok_visa";
     fetch('https://e932hmebne.execute-api.us-west-2.amazonaws.com/dev/processOrder', {
       method: 'POST',
       headers: {
@@ -49,7 +48,7 @@ class App extends Component {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        stripe: this.token,
+        stripe: this.state.token.id,
         name: event.toAddress.name,
         message: event.message,
         toAddress: event.toAddress,
@@ -57,8 +56,6 @@ class App extends Component {
         base64image: event.image
       })
     })
-    console.log(stripe);
-    // this.setState( { submittedValues });
   }
 
   render() {
@@ -148,7 +145,9 @@ class App extends Component {
 
                 </div>
 
-                <StripeOrSubmiton token={this.state.token} onToken={this.onToken}/>
+                <div>
+                  <StripeOrSubmit token={this.state.token} onToken={this.onToken}/>
+                </div>
               </form>
             )}
           </Form>
