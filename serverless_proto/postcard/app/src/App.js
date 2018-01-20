@@ -15,7 +15,7 @@ function StripeOrSubmit(props) {
   else {
     return <StripeCheckout
       token={onToken}
-      stripeKey="pk_test_SfLgmhoTnS4gYa22nDw6q5lX"
+      stripeKey="pk_test_nVSFHQNy2EbiO7g6pwjatiyV"
       amount={1000}
       currency="CAD"
       >
@@ -51,7 +51,7 @@ class App extends Component {
   }
 
   handleSubmit(event) {
-    fetch('https://e932hmebne.execute-api.us-west-2.amazonaws.com/dev/processOrder', {
+    fetch('https://lxfvklxu68.execute-api.us-west-2.amazonaws.com/prod/processOrder', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',

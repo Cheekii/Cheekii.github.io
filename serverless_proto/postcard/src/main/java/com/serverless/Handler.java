@@ -232,8 +232,8 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
                   .setPhone(Strings.nullToEmpty(fromAddress.getPhone()))
                   .setEmail(Strings.nullToEmpty(fromAddress.getEmail()))
           )
-          .setFront("tmpl_0438db589b41b78")
-          .setBack("tmpl_fd873bb10c64aff")
+          .setFront("tmpl_5635fab87f724c5")
+          .setBack("tmpl_87d4ff5f4dc694d")
           .setMergeVariables(mergeVariables)
           .setMetadata(Collections.singletonMap("order_guid", orderGuid.toString()))
           .create();
