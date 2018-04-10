@@ -1,8 +1,3 @@
-apply plugin: 'java'
-
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
 repositories {
     mavenCentral()
 }
@@ -16,7 +11,28 @@ buildscript {
     }
 }
 
+ext{
+    junitPlatformVersion = '1.1.1'
+    junitJupiterVersion  = '5.1.1'
+    awsLambdaJavaCoreVersion = '1.1.0'
+    awsLambdaJavaLog4jVersion = '1.0.0'
+    awsJavaSdkBomVersion = '1.11.228'
+    jacksonVersion = '2.8.5'
+    lobVersion = '7.0.0'
+    stripeVersion = '5.22.1'
+    guaveVersion = '23.5-jre'
+    findBugsVersion = '3.0.0'
+    mockitoVersion = '2.+'
+}
+
+apply plugin: 'java'
 apply plugin: "io.spring.dependency-management"
+apply plugin: 'checkstyle'
+apply plugin: 'findbugs'
+apply plugin: "jacoco"
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 dependencyManagement {
     imports {
@@ -26,22 +42,54 @@ dependencyManagement {
 
 dependencies {
     compile (
-        'com.amazonaws:aws-lambda-java-core:1.1.0',
-        'com.amazonaws:aws-lambda-java-log4j:1.0.0',
-        'com.amazonaws:aws-java-sdk-bom:1.11.228',
-        'com.amazonaws:aws-java-sdk-s3',
-        'com.fasterxml.jackson.core:jackson-core:2.8.5',
-        'com.fasterxml.jackson.core:jackson-databind:2.8.5',
-        'com.fasterxml.jackson.core:jackson-annotations:2.8.5',
-        'com.lob:lob-java:7.0.0',
-        'com.stripe:stripe-java:5.22.1',
-        'com.google.guava:guava:23.5-jre'
+        "com.amazonaws:aws-lambda-java-core:${awsLambdaJavaCoreVersion}",
+        "com.amazonaws:aws-lambda-java-log4j:${awsLambdaJavaLog4jVersion}",
+        "com.amazonaws:aws-java-sdk-bom:${awsJavaSdkBomVersion}",
+        "com.amazonaws:aws-java-sdk-s3",
+        "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}",
+        "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}",
+        "com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}",
+        "com.lob:lob-java:${lobVersion}",
+        "com.stripe:stripe-java:${stripeVersion}",
+        "com.google.guava:guava:${guaveVersion}",
+        "com.google.code.findbugs:annotations:${findBugsVersion}",
+        "org.mockito:mockito-core:${mockitoVersion}",
+        "org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}"
     )
-    compile group: 'com.google.code.findbugs', name: 'annotations', version: '3.0.0'
-//    testCompile 'junit:junit:4.12'
+    testCompile("org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}")
+    testRuntime("org.junit.jupiter:junit-jupiter-engine:${junitJupiterVersion}")
 }
 
-apply plugin: 'checkstyle'
+
+jacoco {
+    toolVersion = "0.8.1"
+}
+
+test {
+    useJUnitPlatform()
+
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+
+    reports {
+        html.enabled = true
+    }
+
+    jacoco {
+        excludes = ["**/junitextensions/**"]
+    }
+}
+
+jacocoTestReport {
+    afterEvaluate {
+        classDirectories = files(classDirectories.files.collect {
+            fileTree(dir: it,
+                    exclude: ["**/junitextensions/**"])
+        })
+    }
+}
+
 checkstyle {
     toolVersion '8.8'
     configFile file("config/checkstyle/checkstyle.xml")
@@ -57,6 +105,7 @@ checkstyleTest {
 }
 
 tasks.withType(Checkstyle) {
+    exclude '**/com/junitextensions/MockitoExtension.java'
     reports {
         xml.enabled false
         html.enabled true
@@ -64,7 +113,6 @@ tasks.withType(Checkstyle) {
     }
 }
 
-apply plugin: 'findbugs'
 findbugs {
     ignoreFailures = false
     toolVersion = "3.0.1"
@@ -73,6 +121,7 @@ findbugs {
     reportsDir = file("$project.buildDir/reports/findbugs")
     effort = "max"
 }
+
 tasks.withType(FindBugs) {
     reports {
         xml.enabled false
@@ -101,5 +150,5 @@ task buildZip(type: Zip) {
 build.dependsOn buildZip
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '3.5'
+    gradleVersion = '4.6'
 }
