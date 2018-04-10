@@ -1,6 +1,7 @@
 package com.serverless;
 
 public class Address {
+
   private String name;
   private String line1;
   private String city;
@@ -10,6 +11,17 @@ public class Address {
   private String phone;
   private String email;
 
+  /**
+   * Constructs and address object.
+   * @param name the name of the person
+   * @param line1 line 1 of the address
+   * @param city the city
+   * @param state the state/province
+   * @param zip the postal/zip code
+   * @param country the country
+   * @param phone the phone number
+   * @param email the email
+   */
   public Address(String name, String line1, String city, String state, String zip,
       String country, String phone, String email) {
     this.name = name;

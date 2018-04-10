@@ -2,8 +2,7 @@ package com.serverless;
 
 class RefundChargeException extends Exception {
 
-  RefundChargeException(Exception e)
-  {
+  RefundChargeException(Exception e) {
     super(e);
   }
 }

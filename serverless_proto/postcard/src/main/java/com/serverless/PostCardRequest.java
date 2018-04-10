@@ -1,9 +1,9 @@
 package com.serverless;
 
 import com.lob.model.Address;
-import java.util.Base64;
 
 public class PostCardRequest {
+
   private String stripe;
   private String name;
   private String message;
@@ -12,7 +12,17 @@ public class PostCardRequest {
   private Address fromAddress;
   private String code;
 
-  public PostCardRequest(String name, String message, String stripeToken, Address toAddress, Address fromAddress, String base64image, String code) {
+  /**
+   * Constructs a post card request.
+   * @param name the recipients name
+   * @param message the postcard's message
+   * @param stripeToken the payment token (proof of purchase)
+   * @param toAddress the recipients address
+   * @param fromAddress the senders address
+   * @param base64image the base64 encoded image
+   */
+  public PostCardRequest(String name, String message, String stripeToken, Address toAddress,
+      Address fromAddress, String base64image, String code) {
     this.name = name;
     this.message = message;
     this.stripe = stripeToken;

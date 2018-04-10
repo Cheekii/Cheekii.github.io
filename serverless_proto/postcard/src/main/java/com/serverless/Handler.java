@@ -22,11 +22,10 @@ import com.stripe.Stripe;
 import com.stripe.exception.APIConnectionException;
 import com.stripe.exception.CardException;
 import com.stripe.model.Charge;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
 import java.util.Base64;
 import java.util.Collections;
@@ -40,7 +39,8 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
   private static final String STRIPE_SECRET_KEY = System.getenv().get("STRIPE_SECRET_KEY");
   private static final String LOB_SECRET_KEY = System.getenv().get("LOB_SECRET_KEY");
   private static final String LOB_API_VERSION = System.getenv().get("LOB_API_VERSION");
-  private static final Integer POSTCARD_PRICE = Integer.valueOf(System.getenv().get("POSTCARD_PRICE"));
+  private static final Integer POSTCARD_PRICE = Integer
+      .valueOf(System.getenv().get("POSTCARD_PRICE"));
   private static final String POSTCARD_CURRANCY = System.getenv().get("POSTCARD_CURRANCY");
   private static final String DISCOUNT_CODE = System.getenv().get("DISCOUNT_CODE");
   private static final String BUCKET_NAME = System.getenv().get("BUCKET");
@@ -49,6 +49,7 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
   private static final Gson GSON = new Gson();
   private static final Logger LOG = Logger.getLogger(Handler.class);
 
+  @SuppressFBWarnings("ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD")
   public Handler() {
     Lob.init(LOB_SECRET_KEY, LOB_API_VERSION);
     Stripe.apiKey = STRIPE_SECRET_KEY;
@@ -58,7 +59,8 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
   public ApiGatewayResponse handleRequest(Map<String, Object> input, Context context) {
     LOG.info("received: " + input);
 
-    PostCardRequest request = GSON.fromJson(String.valueOf(input.get("body")), PostCardRequest.class);
+    PostCardRequest request = GSON
+        .fromJson(String.valueOf(input.get("body")), PostCardRequest.class);
 
     UUID orderGuid = UUID.randomUUID();
 
@@ -90,8 +92,8 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
         BUCKET_NAME,
         key,
         inputStream, metadata);
-    PutObjectResult result  = s3.putObject(putObjectRequest);
-    LOG.info("PutObjectResult:"+result);
+    PutObjectResult result = s3.putObject(putObjectRequest);
+    LOG.info("PutObjectResult:" + result);
     URL url = s3.getUrl(BUCKET_NAME, key);
 
     Postcard postcard;
@@ -100,7 +102,8 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
 
     } catch (PostcardCreationException e) {
       LOG.error("Failed to create postcard", e);
-      String failureMessage = String.format("Postcard could not be created for order: %s", orderGuid);
+      String failureMessage = String
+          .format("Postcard could not be created for order: %s", orderGuid);
       if (!discountApplied) {
         try {
           refundCharge(charge);
@@ -113,8 +116,8 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
       return ApiGatewayResponse.builder()
           .setStatusCode(500)
           .setObjectBody(failureMessage)
-          .setHeaders(ImmutableMap.<String,String>builder()
-              .put("X-Powered-By","AWS Lambda & serverless")
+          .setHeaders(ImmutableMap.<String, String>builder()
+              .put("X-Powered-By", "AWS Lambda & serverless")
               .put("Content-Type", "text/plain")
               .build())
           .build();
@@ -133,7 +136,7 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
         .setStatusCode(200)
         .setObjectBody(jsonPostcard)
         .setHeaders(ImmutableMap.<String, String>builder()
-            .put("X-Powered-By","AWS Lambda & serverless")
+            .put("X-Powered-By", "AWS Lambda & serverless")
             .put("Content-Type", "application/json")
             .put("Access-Control-Allow-Origin", "*")
             .build())
@@ -143,16 +146,17 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
   private Charge refundCharge(Charge charge) throws RefundChargeException {
     try {
       return charge.refund();
-    } catch (com.stripe.exception.AuthenticationException |
-        com.stripe.exception.InvalidRequestException |
-        APIConnectionException |
-        CardException |
-        com.stripe.exception.APIException e) {
+    } catch (com.stripe.exception.AuthenticationException
+        | com.stripe.exception.InvalidRequestException
+        | APIConnectionException
+        | CardException
+        | com.stripe.exception.APIException e) {
       throw new RefundChargeException(e);
     }
   }
 
-  private void updateChargeWithOrderId(Charge charge, Postcard postcard) throws UpdateChargeException {
+  private void updateChargeWithOrderId(Charge charge, Postcard postcard)
+      throws UpdateChargeException {
     try {
       charge.update(ImmutableMap.<String, Object>builder()
           .put("metadata", ImmutableMap.<String, Object>builder()
@@ -160,16 +164,16 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
               .put("order_url", postcard.getUrl())
               .build())
           .build());
-    } catch (com.stripe.exception.AuthenticationException |
-        com.stripe.exception.InvalidRequestException |
-        APIConnectionException |
-        CardException |
-        com.stripe.exception.APIException e) {
+    } catch (com.stripe.exception.AuthenticationException
+        | com.stripe.exception.InvalidRequestException
+        | APIConnectionException
+        | CardException
+        | com.stripe.exception.APIException e) {
       throw new UpdateChargeException(e);
     }
   }
 
-  private Charge chargeCard(String stripeToken, UUID orderGuid) throws ChargeProcessingException{
+  private Charge chargeCard(String stripeToken, UUID orderGuid) throws ChargeProcessingException {
     try {
       // Charge the user's card:
       Map<String, Object> params = ImmutableMap.<String, Object>builder()
@@ -183,11 +187,11 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
           .put("source", stripeToken)
           .build();
       return Charge.create(params);
-    } catch (com.stripe.exception.AuthenticationException |
-        com.stripe.exception.InvalidRequestException |
-        APIConnectionException |
-        CardException |
-        com.stripe.exception.APIException e) {
+    } catch (com.stripe.exception.AuthenticationException
+        | com.stripe.exception.InvalidRequestException
+        | APIConnectionException
+        | CardException
+        | com.stripe.exception.APIException e) {
       throw new ChargeProcessingException(e);
     }
   }
@@ -196,7 +200,7 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
       PostCardRequest request,
       URL image,
       UUID orderGuid)
-      throws PostcardCreationException{
+      throws PostcardCreationException {
     Map<String, String> mergeVariables = new HashMap<>();
     mergeVariables.put("name", request.getName());
     mergeVariables.put("message", request.getMessage());
@@ -237,11 +241,11 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
           .setMergeVariables(mergeVariables)
           .setMetadata(Collections.singletonMap("order_guid", orderGuid.toString()))
           .create();
-    } catch (APIException |
-        IOException |
-        AuthenticationException |
-        InvalidRequestException |
-        RateLimitException e) {
+    } catch (APIException
+        | IOException
+        | AuthenticationException
+        | InvalidRequestException
+        | RateLimitException e) {
       throw new PostcardCreationException(e);
     }
 

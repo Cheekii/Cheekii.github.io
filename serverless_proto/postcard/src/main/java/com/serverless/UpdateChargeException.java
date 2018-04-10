@@ -2,8 +2,7 @@ package com.serverless;
 
 class UpdateChargeException extends Exception {
 
-  UpdateChargeException(Exception e)
-  {
+  UpdateChargeException(Exception e) {
     super(e);
   }
 }
