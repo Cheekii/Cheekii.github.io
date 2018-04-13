@@ -70,6 +70,7 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
 
     final boolean discountApplied = request.getCode().equals(DISCOUNT_CODE);
 
+    // start by charging the card
     Charge charge = null;
     if (!discountApplied) {
       try {
@@ -86,6 +87,8 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
             .build();
       }
     }
+
+    // Upload image to S3
     byte[] decodedImage = Base64.getDecoder().decode(request.getBase64image().split(",")[1]);
     InputStream inputStream = new ByteArrayInputStream(decodedImage);
     AmazonS3 s3 = AmazonS3ClientBuilder.defaultClient();
@@ -100,6 +103,7 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
     LOG.info("PutObjectResult:" + result);
     URL url = s3.getUrl(BUCKET_NAME, key);
 
+    // Create post card
     Postcard postcard;
     try {
       postcard = createPostCard(request, url, orderGuid);
@@ -127,6 +131,7 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
           .build();
     }
 
+    // Update charge with postcard info
     if (!discountApplied) {
       try {
         updateChargeWithOrderId(charge, postcard);
