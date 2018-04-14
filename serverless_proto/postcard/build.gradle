@@ -23,6 +23,7 @@ ext{
     guaveVersion = '23.5-jre'
     findBugsVersion = '3.0.0'
     mockitoVersion = '2.+'
+    guiceVersion = "4.0"
 }
 
 apply plugin: 'java'
@@ -54,7 +55,8 @@ dependencies {
         "com.google.guava:guava:${guaveVersion}",
         "com.google.code.findbugs:annotations:${findBugsVersion}",
         "org.mockito:mockito-core:${mockitoVersion}",
-        "org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}"
+        "org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}",
+        "com.google.inject:guice:${guiceVersion}"
     )
     testCompile("org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}")
     testRuntime("org.junit.jupiter:junit-jupiter-engine:${junitJupiterVersion}")

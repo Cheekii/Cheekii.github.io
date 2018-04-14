@@ -1,5 +1,6 @@
 package com.serverless;
 
+import com.google.common.base.MoreObjects;
 import com.lob.model.Address;
 
 public class PostCardRequest {
@@ -14,6 +15,7 @@ public class PostCardRequest {
 
   /**
    * Constructs a post card request.
+   *
    * @param name the recipients name
    * @param message the postcard's message
    * @param stripeToken the payment token (proof of purchase)
@@ -58,5 +60,18 @@ public class PostCardRequest {
 
   public String getCode() {
     return code;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("stripe", stripe)
+        .add("name", name)
+        .add("message", message)
+        .add("base64image", base64image)
+        .add("toAddress", toAddress)
+        .add("fromAddress", fromAddress)
+        .add("code", code)
+        .toString();
   }
 }

@@ -10,6 +10,9 @@ import com.amazonaws.services.s3.model.PutObjectResult;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import com.lob.Lob;
 import com.lob.exception.APIException;
 import com.lob.exception.AuthenticationException;
@@ -39,24 +42,38 @@ import java.util.UUID;
 import org.apache.log4j.Logger;
 
 public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayResponse> {
-
-  private static final String STRIPE_SECRET_KEY = System.getenv().get("STRIPE_SECRET_KEY");
-  private static final String LOB_SECRET_KEY = System.getenv().get("LOB_SECRET_KEY");
-  private static final String LOB_API_VERSION = System.getenv().get("LOB_API_VERSION");
-  private static final Integer POSTCARD_PRICE = Integer
-      .valueOf(System.getenv().get("POSTCARD_PRICE"));
-  private static final String POSTCARD_CURRANCY = System.getenv().get("POSTCARD_CURRANCY");
-  private static final String DISCOUNT_CODE = System.getenv().get("DISCOUNT_CODE");
-  private static final String BUCKET_NAME = System.getenv().get("BUCKET");
-
-
   private static final Gson GSON = new Gson();
   private static final Logger LOG = Logger.getLogger(Handler.class);
+  private static final Injector INJECTOR = Guice.createInjector(
+      new EnvironmentModule(),
+      new BillingModule());
+
+  @Inject
+  private BillingService billingService;
+
+  @Inject
+  private Environment environment;
+
+  public Handler() {
+    INJECTOR.injectMembers(this);
+    initialize();
+  }
+
+  /**
+   * Creates a handler instance with a given environment and billing service.
+   * @param environment the environment
+   * @param billingService the service
+   */
+  public Handler(Environment environment, BillingService billingService) {
+    this.billingService = billingService;
+    this.environment = environment;
+    initialize();
+  }
 
   @SuppressFBWarnings("ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD")
-  public Handler() {
-    Lob.init(LOB_SECRET_KEY, LOB_API_VERSION);
-    Stripe.apiKey = STRIPE_SECRET_KEY;
+  private void initialize() {
+    Lob.init(environment.getLobSecretKey(), environment.getLobApiVersion());
+    Stripe.apiKey = environment.getStripeSecretKey();
   }
 
   @Override
@@ -68,7 +85,7 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
 
     UUID orderGuid = UUID.randomUUID();
 
-    final boolean discountApplied = request.getCode().equals(DISCOUNT_CODE);
+    final boolean discountApplied = request.getCode().equals(environment.getDiscountCode());
 
     // start by charging the card
     Charge charge = null;
@@ -96,12 +113,12 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
     metadata.setContentLength(decodedImage.length);
     String key = orderGuid.toString() + ".jpg";
     PutObjectRequest putObjectRequest = new PutObjectRequest(
-        BUCKET_NAME,
+        environment.getBucketName(),
         key,
         inputStream, metadata);
     PutObjectResult result = s3.putObject(putObjectRequest);
     LOG.info("PutObjectResult:" + result);
-    URL url = s3.getUrl(BUCKET_NAME, key);
+    URL url = s3.getUrl(environment.getBucketName(), key);
 
     // Create post card
     Postcard postcard;
@@ -186,8 +203,8 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
     try {
       // Charge the user's card:
       Map<String, Object> params = ImmutableMap.<String, Object>builder()
-          .put("amount", POSTCARD_PRICE)
-          .put("currency", POSTCARD_CURRANCY)
+          .put("amount", environment.getPostcardPrice())
+          .put("currency", environment.getPostcardCurrancy())
           .put("description", "Cheekii gram")
           .put("metadata", ImmutableMap.<String, Object>builder()
               .put("order_guid", orderGuid)

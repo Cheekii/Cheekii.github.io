@@ -17,20 +17,29 @@ public class Base64S3Uploader {
 
   private static final Logger LOG = Logger.getLogger(Base64S3Uploader.class);
 
+  /**
+   * Create a base64 uploader from a given bucket name.
+   * @param bucketName the bucket name
+   */
   public Base64S3Uploader(String bucketName) {
     this.amazonS3 = AmazonS3ClientBuilder.defaultClient();
     this.bucketName = bucketName;
   }
 
+  /**
+   * Create a base64 uploader from a given bucket name and S3 client.
+   * @param bucketName the bucket name
+   * @param client the client
+   */
   public Base64S3Uploader(String bucketName, AmazonS3 client) {
     this.amazonS3 = client;
     this.bucketName = bucketName;
   }
 
   /**
-   * Uploads a base64 file to s3, returning the URL
-   * @param base64
-   * @param fileName
+   * Uploads a base64 file to s3, returning the URL.
+   * @param base64 the base64 data
+   * @param fileName the name of the file
    * @return
    */
   public URL upload(String base64, String fileName) {
