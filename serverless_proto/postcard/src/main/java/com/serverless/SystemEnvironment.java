@@ -17,8 +17,8 @@ public class SystemEnvironment implements Environment {
   }
 
   @Override
-  public Integer getPostcardPrice() {
-    return Integer.valueOf(System.getenv().get("POSTCARD_PRICE"));
+  public Long getPostcardPrice() {
+    return Long.valueOf(System.getenv().get("POSTCARD_PRICE"));
   }
 
   @Override

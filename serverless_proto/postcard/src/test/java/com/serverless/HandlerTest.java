@@ -21,14 +21,14 @@ class HandlerTest {
     when(environment.getLobApiVersion()).thenReturn("2017-11-08");
     when(environment.getLobSecretKey()).thenReturn("LOB-SECRET-KEY");
     when(environment.getPostcardCurrancy()).thenReturn("CAD");
-    when(environment.getPostcardPrice()).thenReturn(1000);
+    when(environment.getPostcardPrice()).thenReturn(1000L);
     when(environment.getStripeSecretKey()).thenReturn("STRIPE-SECRET-KEY");
   }
 
   @Test
   void testConstructorInitializesKeys(@Mock Environment environment,
       @Mock BillingService billingService) {
-    Handler handler = new Handler(environment, billingService);
+    new Handler(environment, billingService);
     assertEquals(Lob.apiKey, "LOB-SECRET-KEY");
     assertEquals(Stripe.apiKey, "STRIPE-SECRET-KEY");
   }

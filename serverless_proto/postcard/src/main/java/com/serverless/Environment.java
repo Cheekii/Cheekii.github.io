@@ -8,7 +8,7 @@ public interface Environment {
 
   String getLobApiVersion();
 
-  Integer getPostcardPrice();
+  Long getPostcardPrice();
 
   String getPostcardCurrancy();
 
