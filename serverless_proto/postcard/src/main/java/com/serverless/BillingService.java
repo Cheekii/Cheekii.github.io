@@ -18,7 +18,7 @@ public class BillingService {
   }
 
   Order chargeOrder(Order order) throws ChargeProcessingException {
-    LOG.info("Authorizing payment for order: " + order);
+    LOG.info("Charging payment for order: " + order.getOrderId());
     return processor.charge(order);
   }
 }

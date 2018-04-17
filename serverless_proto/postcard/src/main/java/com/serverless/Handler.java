@@ -45,13 +45,17 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
   private static final Logger LOG = Logger.getLogger(Handler.class);
   private static final Injector INJECTOR = Guice.createInjector(
       new EnvironmentModule(),
-      new BillingModule());
+      new BillingModule(),
+      new ImageStorageModule());
 
   @Inject
   private BillingService billingService;
 
   @Inject
   private Environment environment;
+
+  @Inject
+  private ImageStorageService imageStorageService;
 
   public Handler() {
     INJECTOR.injectMembers(this);
@@ -63,9 +67,13 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
    * @param environment the environment
    * @param billingService the service
    */
-  public Handler(Environment environment, BillingService billingService) {
+  public Handler(
+      Environment environment,
+      BillingService billingService,
+      ImageStorageService imageStorageService) {
     this.billingService = billingService;
     this.environment = environment;
+    this.imageStorageService = imageStorageService;
     initialize();
   }
 
@@ -108,20 +116,7 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
     }
 
     // Upload image to S3
-    byte[] decodedImage = Base64.getDecoder()
-        .decode(order.getPostCard().getBase64image().split(",")[1]);
-    InputStream inputStream = new ByteArrayInputStream(decodedImage);
-    AmazonS3 s3 = AmazonS3ClientBuilder.defaultClient();
-    ObjectMetadata metadata = new ObjectMetadata();
-    metadata.setContentLength(decodedImage.length);
-    String key = order.getOrderId().toString() + ".jpg";
-    PutObjectRequest putObjectRequest = new PutObjectRequest(
-        environment.getBucketName(),
-        key,
-        inputStream, metadata);
-    PutObjectResult result = s3.putObject(putObjectRequest);
-    LOG.info("PutObjectResult:" + result);
-    URL url = s3.getUrl(environment.getBucketName(), key);
+    URL url = imageStorageService.upload(order, environment.getBucketName());
 
     ImmutableMap map = ImmutableMap.of(
         "orderId", order.getOrderId(),

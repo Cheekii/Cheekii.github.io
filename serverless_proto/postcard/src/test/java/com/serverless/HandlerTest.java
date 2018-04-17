@@ -27,8 +27,8 @@ class HandlerTest {
 
   @Test
   void testConstructorInitializesKeys(@Mock Environment environment,
-      @Mock BillingService billingService) {
-    new Handler(environment, billingService);
+      @Mock BillingService billingService, @Mock ImageStorageService imageStorageService) {
+    new Handler(environment, billingService, imageStorageService);
     assertEquals(Lob.apiKey, "LOB-SECRET-KEY");
     assertEquals(Stripe.apiKey, "STRIPE-SECRET-KEY");
   }
