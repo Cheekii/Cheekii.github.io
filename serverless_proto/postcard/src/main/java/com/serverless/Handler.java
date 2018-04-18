@@ -72,19 +72,22 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
         null
     );
 
-    // start by charging the card
     try {
+      // start by charging the card
       order = billingService.chargeOrder(order);
+
+      // Upload image to S3
+      order = imageStorageService.upload(order, environment.getBucketName());
+
+      // submit the post card
+      order = postCardService.submit(order);
+
+      // update the charge with details from the job
+      billingService.updateWithJob(order);
+
     } catch (ChargeProcessingException e) {
       LOG.error("Failed to charge card", e);
       return getFailureResponse("failed to charge postcard");
-    }
-
-    // Upload image to S3
-    order = imageStorageService.upload(order, environment.getBucketName());
-
-    try {
-      order = postCardService.submit(order);
     } catch (PostcardCreationException e) {
       String failureMessage = String
           .format("Postcard could not be created for order: %s", order.getOrderId());
@@ -98,16 +101,15 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
         LOG.error(failureMessage, e1);
       }
       return getFailureResponse(failureMessage);
-    }
-
-    try {
-      billingService.updateWithJob(order);
     } catch (UpdateChargeException e) {
       String failureMessage = String
           .format("Failed to update charge with metadata for order: %s", order.getOrderId());
       LOG.error(failureMessage, e);
     }
+    return getSuccessResponse(order);
+  }
 
+  private ApiGatewayResponse getSuccessResponse(Order order) {
     ImmutableMap map = ImmutableMap.of(
         "orderId", order.getOrderId(),
         "stripeId", order.getCharge().getId(),
