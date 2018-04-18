@@ -1,6 +1,8 @@
 package com.serverless;
 
 import com.google.common.base.Strings;
+import com.google.inject.Inject;
+import com.lob.Lob;
 import com.lob.exception.APIException;
 import com.lob.exception.AuthenticationException;
 import com.lob.exception.InvalidRequestException;
@@ -14,6 +16,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class LobPostCardProvider implements PostCardProvider {
+
+  private final String frontTemplateId;
+  private final String backTemplateId;
+
+  /**
+   * Constructs a Lob post card provider.
+   * @param environment the environment
+   */
+  @Inject
+  public LobPostCardProvider(Environment environment) {
+    Lob.init(environment.getLobSecretKey(), environment.getLobApiVersion());
+    frontTemplateId = environment.getLobFrontTemplateId();
+    backTemplateId = environment.getLobBackTemplateId();
+  }
 
   @Override
   public Order submit(Order order) throws PostcardCreationException {
@@ -52,8 +68,8 @@ public class LobPostCardProvider implements PostCardProvider {
                   .setPhone(Strings.nullToEmpty(fromAddress.getPhone()))
                   .setEmail(Strings.nullToEmpty(fromAddress.getEmail()))
           )
-          .setFront("tmpl_2cccd5a52ae91e9")
-          .setBack("tmpl_5de47ab0860d3be")
+          .setFront(frontTemplateId)
+          .setBack(backTemplateId)
           .setMergeVariables(mergeVariables)
           .setMetadata(Collections.singletonMap("order_guid", order.getOrderId().toString()))
           .create();

@@ -1,13 +1,9 @@
 package com.serverless;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
 import com.junitextensions.MockitoExtension;
-import com.lob.Lob;
-import com.stripe.Stripe;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 
@@ -23,14 +19,6 @@ class HandlerTest {
     when(environment.getPostcardCurrancy()).thenReturn("CAD");
     when(environment.getPostcardPrice()).thenReturn(1000L);
     when(environment.getStripeSecretKey()).thenReturn("STRIPE-SECRET-KEY");
-  }
-
-  @Test
-  void testConstructorInitializesKeys(@Mock Environment environment,
-      @Mock BillingService billingService, @Mock ImageStorageService imageStorageService) {
-    new Handler(environment, billingService, imageStorageService);
-    assertEquals(Lob.apiKey, "LOB-SECRET-KEY");
-    assertEquals(Stripe.apiKey, "STRIPE-SECRET-KEY");
   }
 
 }

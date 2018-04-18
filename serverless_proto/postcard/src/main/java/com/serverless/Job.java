@@ -1,7 +1,5 @@
 package com.serverless;
 
-import java.net.URL;
-
 public class Job {
   private final String id;
   private final String url;

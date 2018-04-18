@@ -1,7 +1,6 @@
 package com.serverless;
 
 import com.google.inject.Inject;
-import java.net.URL;
 import org.apache.log4j.Logger;
 
 public class ImageStorageService {

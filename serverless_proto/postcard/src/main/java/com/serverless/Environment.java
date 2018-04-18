@@ -15,4 +15,8 @@ public interface Environment {
   String getDiscountCode();
 
   String getBucketName();
+
+  String getLobFrontTemplateId();
+
+  String getLobBackTemplateId();
 }

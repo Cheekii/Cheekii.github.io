@@ -35,4 +35,14 @@ public class SystemEnvironment implements Environment {
   public String getBucketName() {
     return System.getenv().get("BUCKET");
   }
+
+  @Override
+  public String getLobFrontTemplateId() {
+    return System.getenv().get("LOB_FRONT_TEMPLATE_ID");
+  }
+
+  @Override
+  public String getLobBackTemplateId() {
+    return System.getenv().get("LOB_BACK_TEMPLATE_ID");
+  }
 }
