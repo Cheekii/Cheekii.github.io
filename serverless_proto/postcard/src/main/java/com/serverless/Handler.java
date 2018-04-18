@@ -46,7 +46,8 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
   private static final Injector INJECTOR = Guice.createInjector(
       new EnvironmentModule(),
       new BillingModule(),
-      new ImageStorageModule());
+      new ImageStorageModule(),
+      new PostCardModule());
 
   @Inject
   private BillingService billingService;
@@ -56,6 +57,9 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
 
   @Inject
   private ImageStorageService imageStorageService;
+
+  @Inject
+  private PostCardService postCardService;
 
   public Handler() {
     INJECTOR.injectMembers(this);
@@ -97,7 +101,8 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
         new Charge(
             environment.getPostcardPrice(),
             environment.getPostcardCurrancy(),
-            "Cheekii Gram")
+            "Cheekii Gram"),
+        null
     );
 
     // start by charging the card
@@ -105,23 +110,41 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
       order = billingService.chargeOrder(order);
     } catch (ChargeProcessingException e) {
       LOG.error("Failed to charge card", e);
-      return ApiGatewayResponse.builder()
-          .setStatusCode(500)
-          .setObjectBody("failed to charge postcard")
-          .setHeaders(ImmutableMap.<String, String>builder()
-              .put("X-Powered-By", "AWS Lambda & serverless")
-              .put("Content-Type", "text/plain")
-              .build())
-          .build();
+      return getFailureResponse("failed to charge postcard");
     }
 
     // Upload image to S3
-    URL url = imageStorageService.upload(order, environment.getBucketName());
+    order = imageStorageService.upload(order, environment.getBucketName());
+
+    try {
+      order = postCardService.submit(order);
+    } catch (PostcardCreationException e) {
+      String failureMessage = String
+          .format("Postcard could not be created for order: %s", order.getOrderId());
+      LOG.error(failureMessage, e);
+      try {
+        billingService.refundOrder(order);
+      } catch (RefundChargeException e1) {
+        failureMessage = String
+            .format("Postcard could not be created for order: %s Failed to refund.",
+                order.getOrderId());
+        LOG.error(failureMessage, e1);
+      }
+      return getFailureResponse(failureMessage);
+    }
+
+    try {
+      billingService.updateWithJob(order);
+    } catch (UpdateChargeException e) {
+      String failureMessage = String
+          .format("Failed to update charge with metadata for order: %s", order.getOrderId());
+      LOG.error(failureMessage, e);
+    }
 
     ImmutableMap map = ImmutableMap.of(
         "orderId", order.getOrderId(),
         "stripeId", order.getCharge().getId(),
-        "imageUrl", url
+        "imageUrl", order.getPostCard().getImageUrl()
     );
     return ApiGatewayResponse.builder()
         .setStatusCode(200)
@@ -132,169 +155,16 @@ public class Handler implements RequestHandler<Map<String, Object>, ApiGatewayRe
             .put("Access-Control-Allow-Origin", "*")
             .build())
         .build();
-    //CSOFF: LineLengthCheck
-    //CSOFF: CommentsIndentationCheck
-        //    // Create post card
-        //    Postcard postcard;
-        //    try {
-        //      postcard = createPostCard(request, url, orderGuid);
-        //
-        //    } catch (PostcardCreationException e) {
-        //      LOG.error("Failed to create postcard", e);
-        //      String failureMessage = String
-        //          .format("Postcard could not be created for order: %s", orderGuid);
-        //      if (!discountApplied) {
-        //        try {
-        //          refundCharge(charge);
-        //        } catch (RefundChargeException e1) {
-        //          LOG.error(String.format("Failed to refund charge for order: %s", orderGuid), e1);
-        //          failureMessage = String
-        //              .format("Postcard could not be created for order: %s Failed to refund.", orderGuid);
-        //        }
-        //      }
-        //      return ApiGatewayResponse.builder()
-        //          .setStatusCode(500)
-        //          .setObjectBody(failureMessage)
-        //          .setHeaders(ImmutableMap.<String, String>builder()
-        //              .put("X-Powered-By", "AWS Lambda & serverless")
-        //              .put("Content-Type", "text/plain")
-        //              .build())
-        //          .build();
-        //    }
-        //
-        //    // Update charge with postcard info
-        //    if (!discountApplied) {
-        //      try {
-        //        updateChargeWithOrderId(charge, postcard);
-        //      } catch (UpdateChargeException e) {
-        //        LOG.error("Failed to update charge with metadata", e);
-        //      }
-        //    }
-        //
-        //    String jsonPostcard = GSON.toJson(postcard);
-        //    return ApiGatewayResponse.builder()
-        //        .setStatusCode(200)
-        //        .setObjectBody(jsonPostcard)
-        //        .setHeaders(ImmutableMap.<String, String>builder()
-        //            .put("X-Powered-By", "AWS Lambda & serverless")
-        //            .put("Content-Type", "application/json")
-        //            .put("Access-Control-Allow-Origin", "*")
-        //            .build())
-        //        .build();
-    //CSON: LineLengthCheck
-    //CSON: CommentsIndentationCheck
   }
 
-  //CSOFF: CommentsIndentationCheck
-  //CSOFF: LineLengthCheck
-//  private Charge refundCharge(Charge charge) throws RefundChargeException {
-//    try {
-//      return charge.refund();
-//    } catch (com.stripe.exception.AuthenticationException
-//        | com.stripe.exception.InvalidRequestException
-//        | APIConnectionException
-//        | CardException
-//        | com.stripe.exception.APIException e) {
-//      throw new RefundChargeException(e);
-//    }
-//  }
-//
-//  private void updateChargeWithOrderId(Charge charge, Postcard postcard)
-//      throws UpdateChargeException {
-//    try {
-//      charge.update(ImmutableMap.<String, Object>builder()
-//          .put("metadata", ImmutableMap.<String, Object>builder()
-//              .put("order_id", postcard.getId())
-//              .put("order_url", postcard.getUrl())
-//              .build())
-//          .build());
-//    } catch (com.stripe.exception.AuthenticationException
-//        | com.stripe.exception.InvalidRequestException
-//        | APIConnectionException
-//        | CardException
-//        | com.stripe.exception.APIException e) {
-//      throw new UpdateChargeException(e);
-//    }
-//  }
-//
-//  private Charge chargeCard(String stripeToken, UUID orderGuid) throws ChargeProcessingException {
-//    try {
-//      // Charge the user's card:
-//      Map<String, Object> params = ImmutableMap.<String, Object>builder()
-//          .put("amount", environment.getPostcardPrice())
-//          .put("currency", environment.getPostcardCurrancy())
-//          .put("description", "Cheekii gram")
-//          .put("metadata", ImmutableMap.<String, Object>builder()
-//              .put("order_guid", orderGuid)
-//              .build())
-//          .put("statement_descriptor", "Cheekii.co - Postcard")
-//          .put("source", stripeToken)
-//          .build();
-//      return Charge.create(params);
-//    } catch (com.stripe.exception.AuthenticationException
-//        | com.stripe.exception.InvalidRequestException
-//        | APIConnectionException
-//        | CardException
-//        | com.stripe.exception.APIException e) {
-//      throw new ChargeProcessingException(e);
-//    }
-//  }
-//
-//  private Postcard createPostCard(
-//      PostCardRequest request,
-//      URL image,
-//      UUID orderGuid)
-//      throws PostcardCreationException {
-//    Map<String, String> mergeVariables = new HashMap<>();
-//    mergeVariables.put("name", request.getName());
-//    mergeVariables.put("message", request.getMessage());
-//    mergeVariables.put("img", image.toString());
-//
-//    Address toAddress = request.getToAddress();
-//    Address fromAddress = request.getFromAddress();
-//    LobResponse<Postcard> response = null;
-//    try {
-//      response = new Postcard.RequestBuilder()
-//          .setDescription("Demo Postcard")
-//          .setTo(
-//              new Address.RequestBuilder()
-//                  .setName(Strings.nullToEmpty(toAddress.getName()))
-//                  .setLine1(Strings.nullToEmpty(toAddress.getLine1()))
-//                  .setLine2(Strings.nullToEmpty(toAddress.getLine2()))
-//                  .setCity(Strings.nullToEmpty(toAddress.getCity()))
-//                  .setState(Strings.nullToEmpty(toAddress.getState()))
-//                  .setZip(Strings.nullToEmpty(toAddress.getZip()))
-//                  .setCountry(Strings.nullToEmpty(toAddress.getCountry()))
-//                  .setPhone(Strings.nullToEmpty(toAddress.getPhone()))
-//                  .setEmail(Strings.nullToEmpty(toAddress.getEmail()))
-//          )
-//          .setFrom(
-//              new Address.RequestBuilder()
-//                  .setName(Strings.nullToEmpty(fromAddress.getName()))
-//                  .setLine1(Strings.nullToEmpty(fromAddress.getLine1()))
-//                  .setLine2(Strings.nullToEmpty(fromAddress.getLine2()))
-//                  .setCity(Strings.nullToEmpty(fromAddress.getCity()))
-//                  .setState(Strings.nullToEmpty(fromAddress.getState()))
-//                  .setZip(Strings.nullToEmpty(fromAddress.getZip()))
-//                  .setCountry(Strings.nullToEmpty(fromAddress.getCountry()))
-//                  .setPhone(Strings.nullToEmpty(fromAddress.getPhone()))
-//                  .setEmail(Strings.nullToEmpty(fromAddress.getEmail()))
-//          )
-//          .setFront("tmpl_5635fab87f724c5")
-//          .setBack("tmpl_87d4ff5f4dc694d")
-//          .setMergeVariables(mergeVariables)
-//          .setMetadata(Collections.singletonMap("order_guid", orderGuid.toString()))
-//          .create();
-//    } catch (APIException
-//        | IOException
-//        | AuthenticationException
-//        | InvalidRequestException
-//        | RateLimitException e) {
-//      throw new PostcardCreationException(e);
-//    }
-//
-//    return response.getResponseBody();
-//  }
-  //CSON: LineLengthCheck
-  //CSON: CommentsIndentationCheck
+  private ApiGatewayResponse getFailureResponse(String failureMessage) {
+    return ApiGatewayResponse.builder()
+        .setStatusCode(500)
+        .setObjectBody(failureMessage)
+        .setHeaders(ImmutableMap.<String, String>builder()
+            .put("X-Powered-By", "AWS Lambda & serverless")
+            .put("Content-Type", "text/plain")
+            .build())
+        .build();
+  }
 }

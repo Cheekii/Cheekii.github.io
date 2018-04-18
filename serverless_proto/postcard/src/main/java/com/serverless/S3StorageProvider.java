@@ -12,7 +12,7 @@ import java.util.Base64;
 public class S3StorageProvider implements StorageProvider {
 
   @Override
-  public URL upload(Order order, String bucketName) {
+  public Order upload(Order order, String bucketName) {
     byte[] decodedImage = Base64.getDecoder()
         .decode(order.getPostCard().getBase64image().split(",")[1]);
     InputStream inputStream = new ByteArrayInputStream(decodedImage);
@@ -25,6 +25,22 @@ public class S3StorageProvider implements StorageProvider {
         key,
         inputStream, metadata);
     s3.putObject(putObjectRequest);
-    return s3.getUrl(bucketName, key);
+    return getOrderUpdatedWithUrl(order, s3.getUrl(bucketName, key));
+  }
+
+  private Order getOrderUpdatedWithUrl(Order order, URL url) {
+    return new Order(
+        new PostCard(
+            order.getPostCard().getName(),
+            order.getPostCard().getMessage(),
+            order.getPostCard().getToAddress(),
+            order.getPostCard().getFromAddress(),
+            order.getPostCard().getBase64image(),
+            url,
+            order.getPostCard().getCode()),
+        order.getPayment(),
+        order.getOrderId(),
+        order.getCharge(),
+        null);
   }
 }

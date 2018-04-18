@@ -1,14 +1,14 @@
 package com.serverless;
 
 import com.serverless.exceptions.ChargeProcessingException;
+import com.serverless.exceptions.RefundChargeException;
+import com.serverless.exceptions.UpdateChargeException;
 
 public interface CreditCardProcessor {
 
-  void auth();
-
   Order charge(Order order) throws ChargeProcessingException;
 
-  void update();
+  void updateWithJob(Order order) throws UpdateChargeException;
 
-  void refund();
+  void refund(Order order) throws RefundChargeException;
 }

@@ -60,6 +60,8 @@ functions:
       STRIPE_SECRET_KEY: ${self:custom.secrets.STRIPE_SECRET_KEY}
       LOB_SECRET_KEY: ${self:custom.secrets.LOB_SECRET_KEY}
       LOB_API_VERSION: 2017-11-08
+      LOB_FRONT_TEMPLATE_ID: tmpl_2cccd5a52ae91e9
+      LOB_BACK_TEMPLATE_ID: tmpl_5de47ab0860d3be
       POSTCARD_PRICE: 1000
       POSTCARD_CURRANCY: cad
       DISCOUNT_CODE: ${self:custom.secrets.DISCOUNT_CODE}

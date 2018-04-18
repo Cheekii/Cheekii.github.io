@@ -9,6 +9,7 @@ public class Order {
   private final Payment payment;
   private final UUID orderId;
   private final Charge charge;
+  private final Job job;
 
   /**
    * Constructs an order instance.
@@ -17,11 +18,12 @@ public class Order {
    * @param orderId the orderId.
    * @param charge the charge.
    */
-  public Order(PostCard postCard, Payment payment, UUID orderId, Charge charge) {
+  public Order(PostCard postCard, Payment payment, UUID orderId, Charge charge, Job job) {
     this.postCard = postCard;
     this.payment = payment;
     this.orderId = orderId;
     this.charge = charge;
+    this.job = job;
   }
 
   public PostCard getPostCard() {
@@ -40,6 +42,10 @@ public class Order {
     return charge;
   }
 
+  public Job getJob() {
+    return job;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -52,13 +58,14 @@ public class Order {
     return Objects.equals(postCard, order.postCard)
         && Objects.equals(payment, order.payment)
         && Objects.equals(orderId, order.orderId)
-        && Objects.equals(charge, order.charge);
+        && Objects.equals(charge, order.charge)
+        && Objects.equals(job, order.job);
   }
 
   @Override
   public int hashCode() {
 
-    return Objects.hash(postCard, payment, orderId, charge);
+    return Objects.hash(postCard, payment, orderId, charge, job);
   }
 
   @Override
@@ -68,6 +75,7 @@ public class Order {
         .add("payment", payment)
         .add("orderId", orderId)
         .add("charge", charge)
+        .add("job", job)
         .toString();
   }
 }

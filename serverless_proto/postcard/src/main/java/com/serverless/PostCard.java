@@ -2,6 +2,7 @@ package com.serverless;
 
 import com.google.common.base.MoreObjects;
 import com.google.gson.annotations.SerializedName;
+import java.net.URL;
 import java.util.Objects;
 
 public class PostCard {
@@ -12,6 +13,8 @@ public class PostCard {
   private final String message;
   @SerializedName("base64image")
   private final String base64image;
+  @SerializedName("imageUrl")
+  private final URL imageUrl;
   @SerializedName("toAddress")
   private final Address toAddress;
   @SerializedName("fromAddress")
@@ -29,12 +32,13 @@ public class PostCard {
    * @param base64image the base64 encoded image
    */
   public PostCard(String name, String message, Address toAddress, Address fromAddress,
-      String base64image, String code) {
+      String base64image, URL imageUrl, String code) {
     this.name = name;
     this.message = message;
     this.toAddress = toAddress;
     this.fromAddress = fromAddress;
     this.base64image = base64image;
+    this.imageUrl = imageUrl;
     this.code = code;
   }
 
@@ -58,6 +62,10 @@ public class PostCard {
     return base64image;
   }
 
+  public URL getImageUrl() {
+    return imageUrl;
+  }
+
   public String getCode() {
     return code;
   }
@@ -74,6 +82,7 @@ public class PostCard {
     return Objects.equals(name, postCard.name)
         && Objects.equals(message, postCard.message)
         && Objects.equals(base64image, postCard.base64image)
+        && Objects.equals(imageUrl, postCard.imageUrl)
         && Objects.equals(toAddress, postCard.toAddress)
         && Objects.equals(fromAddress, postCard.fromAddress)
         && Objects.equals(code, postCard.code);
@@ -82,7 +91,7 @@ public class PostCard {
   @Override
   public int hashCode() {
 
-    return Objects.hash(name, message, base64image, toAddress, fromAddress, code);
+    return Objects.hash(name, message, base64image, imageUrl, toAddress, fromAddress, code);
   }
 
   @Override
@@ -91,6 +100,7 @@ public class PostCard {
         .add("name", name)
         .add("message", message)
         .add("base64image", base64image)
+        .add("imageUrl", imageUrl)
         .add("toAddress", toAddress)
         .add("fromAddress", fromAddress)
         .add("code", code)

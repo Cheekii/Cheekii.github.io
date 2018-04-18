@@ -1,8 +1,6 @@
 package com.serverless;
 
-import java.net.URL;
-
 public interface StorageProvider {
 
-  URL upload(Order order, String bucketName);
+  Order upload(Order order, String bucketName);
 }

@@ -13,7 +13,7 @@ public class ImageStorageService {
     this.provider = provider;
   }
 
-  URL upload(Order order, String bucketName) {
+  Order upload(Order order, String bucketName) {
     LOG.info("Uploading image for postcard order order: " + order.getOrderId());
     return provider.upload(order, bucketName);
   }

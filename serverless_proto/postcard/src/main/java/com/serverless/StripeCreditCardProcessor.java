@@ -2,20 +2,13 @@ package com.serverless;
 
 import com.google.common.collect.ImmutableMap;
 import com.serverless.exceptions.ChargeProcessingException;
+import com.serverless.exceptions.RefundChargeException;
+import com.serverless.exceptions.UpdateChargeException;
 import com.stripe.exception.APIConnectionException;
-import com.stripe.exception.APIException;
-import com.stripe.exception.AuthenticationException;
 import com.stripe.exception.CardException;
-
-import com.stripe.exception.InvalidRequestException;
 import java.util.Map;
 
 public class StripeCreditCardProcessor implements CreditCardProcessor {
-
-  @Override
-  public void auth() {
-
-  }
 
   @Override
   public Order charge(Order order) throws ChargeProcessingException {
@@ -41,23 +34,46 @@ public class StripeCreditCardProcessor implements CreditCardProcessor {
     }
   }
 
+  @Override
+  public void updateWithJob(Order order) throws UpdateChargeException {
+    try {
+      com.stripe.model.Charge.retrieve(order.getCharge().getId())
+          .update(ImmutableMap.<String, Object>builder()
+          .put("metadata", ImmutableMap.<String, Object>builder()
+              .put("order_id", order.getJob().getId())
+              .put("order_url", order.getJob().getUrl())
+              .build())
+          .build());
+    } catch (com.stripe.exception.AuthenticationException
+        | com.stripe.exception.InvalidRequestException
+        | APIConnectionException
+        | CardException
+        | com.stripe.exception.APIException e) {
+      throw new UpdateChargeException(e);
+    }
+  }
+
+  @Override
+  public void refund(Order order) throws RefundChargeException {
+    try {
+      com.stripe.model.Charge.retrieve(order.getCharge().getId()).refund();
+    } catch (com.stripe.exception.AuthenticationException
+        | com.stripe.exception.InvalidRequestException
+        | APIConnectionException
+        | CardException
+        | com.stripe.exception.APIException e) {
+      throw new RefundChargeException(e);
+    }
+  }
+
   private Order getUpdatedOrderFromCharge(Order order, com.stripe.model.Charge charge) {
     return new Order(
         order.getPostCard(),
         order.getPayment(),
         order.getOrderId(),
         new Charge(
-            charge.getId(), charge.getAmount(), charge.getCurrency(), charge.getDescription())
+            charge.getId(), charge.getAmount(), charge.getCurrency(), charge.getDescription()),
+        null
     );
-  }
-
-  @Override
-  public void update() {
-
-  }
-
-  @Override
-  public void refund() {
-
   }
 }
